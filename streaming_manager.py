@@ -7,7 +7,14 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from config import DEBUG_MODE, HOUSEHOLDS, LOG_FILE, PROVIDERS, WINDOWS_HOST
+from config import (
+    DEBUG_MODE,
+    HOUSEHOLDS,
+    LOG_FILE,
+    PLAN_CATEGORIES,
+    PROVIDERS,
+    WINDOWS_HOST,
+)
 
 
 class StreamingManager:
@@ -15,6 +22,7 @@ class StreamingManager:
 
     def __init__(self) -> None:
         self.windows_host = copy.deepcopy(WINDOWS_HOST)
+        self.plan_categories = copy.deepcopy(PLAN_CATEGORIES)
         self.households = copy.deepcopy(HOUSEHOLDS)
         self.providers = copy.deepcopy(PROVIDERS)
         self.session_counter = 0
@@ -49,11 +57,19 @@ class StreamingManager:
 
         return bool(provider.get("account_label") or provider.get("url"))
 
+    def _get_plan_details(self, plan_id: Optional[str]) -> Dict[str, Any]:
+        if not plan_id:
+            return {}
+        return copy.deepcopy(self.plan_categories.get(plan_id, {}))
+
     def log_action(self, action: str) -> None:
         logging.info(action)
 
     def list_providers(self) -> Dict[str, Dict[str, Any]]:
         return copy.deepcopy(self.providers)
+
+    def list_plan_categories(self) -> Dict[str, Dict[str, Any]]:
+        return copy.deepcopy(self.plan_categories)
 
     def get_household_status(self, household_id: str) -> Dict[str, Any]:
         household = self.households.get(household_id)
@@ -66,6 +82,7 @@ class StreamingManager:
             status.get("allowed_providers", []),
             key=self._provider_rank,
         )
+        status["plan_details"] = self._get_plan_details(status.get("plan_category"))
         return status
 
     def get_all_households(self) -> Dict[str, Dict[str, Any]]:
@@ -119,6 +136,7 @@ class StreamingManager:
             "content_title": content_title,
             "provider_id": provider_id,
             "provider_name": provider["name"],
+            "plan_category": household.get("plan_category"),
             "started_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
             "status": "playing",
         }
@@ -135,6 +153,7 @@ class StreamingManager:
             "session_id": session_id,
             "provider_id": provider_id,
             "household": household["name"],
+            "plan_category": household.get("plan_category"),
         }
 
     def stop_stream(self, household_id: str, session_id: Optional[str] = None) -> Dict[str, Any]:
@@ -191,6 +210,23 @@ class StreamingManager:
 
         return health_report
 
+    def get_plan_summary(self) -> Dict[str, Dict[str, Any]]:
+        summary: Dict[str, Dict[str, Any]] = {}
+        for plan_id, plan in self.plan_categories.items():
+            households_using_plan = [
+                household["name"]
+                for household in self.households.values()
+                if household.get("plan_category") == plan_id
+            ]
+            summary[plan_id] = {
+                "name": plan["name"],
+                "recommended_app": plan["recommended_app"],
+                "target_quality": plan["target_quality"],
+                "households": households_using_plan,
+                "primary_provider": plan["primary_provider"],
+            }
+        return summary
+
     def get_summary(self) -> Dict[str, Any]:
         total_active_streams = sum(
             household["current_streams"] for household in self.households.values()
@@ -212,4 +248,5 @@ class StreamingManager:
             "total_capacity": total_capacity,
             "available_slots": max(0, total_capacity - total_active_streams),
             "active_providers": active_providers,
+            "plan_categories": len(self.plan_categories),
         }
