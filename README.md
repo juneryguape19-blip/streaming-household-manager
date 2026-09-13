@@ -1,59 +1,41 @@
 # Streaming Household Manager
 
-A Python-based management tool for controlling and monitoring streaming services across multiple households.
+A Python-based Windows household media manager for coordinating playback across multiple households using self-hosted or licensed library sources.
 
 ## 🎯 Features
 
-- **Multi-Household Management** - Track streaming across different rooms/households
-- **Stream Limit Control** - Set maximum concurrent streams per household
-- **Service Monitoring** - Check health of your streaming services
-- **Activity Logging** - Record all streaming actions
-- **Simple to Understand** - Built for beginners with detailed comments
+- **Central Windows Host** - Keep provider settings and media paths on one machine
+- **Multi-Household Management** - Track limits and sessions per household
+- **Provider Routing** - Prefer your remux media server first, then fall back to WebDAV or cloud libraries
+- **Session Tracking** - Record which user started which title and through which provider
+- **Service Monitoring** - Check whether configured providers are active and ready
+- **Beginner Friendly** - Simple Python files with detailed examples
 
 ## 📂 Project Structure
 
-```
+```text
 streaming-household-manager/
-├── config.py              # Configuration file with household data
+├── config.py              # Windows host, household, and provider settings
 ├── streaming_manager.py   # Main logic and control functions
-├── main.py               # Demo application
-├── GUIDE.md              # Beginner's guide (START HERE!)
-└── README.md             # This file
+├── main.py                # Demo application
+├── GUIDE.md               # Beginner's guide
+└── README.md              # This file
 ```
 
 ## 🚀 Quick Start
 
-### 1. Clone the Repository
-```bash
-git clone https://github.com/juneryguape19-blip/streaming-household-manager.git
-cd streaming-household-manager
-```
-
-### 2. Run the Demo
+### 1. Run the Demo
 ```bash
 python main.py
 ```
 
-You'll see a demo showing:
-- System summary
-- Household status
-- Starting/stopping streams
-- Service health checks
-
-### 3. Read the Guide
-Open `GUIDE.md` to understand:
-- How the code works
-- What each file does
-- Programming concepts explained simply
-- Real-world examples
-
-## 📖 Learning Path
-
-1. **Start:** Read `GUIDE.md`
-2. **Explore:** Look at `config.py` (the settings)
-3. **Understand:** Read `streaming_manager.py` (the logic)
-4. **Run:** Execute `main.py` (see it in action)
-5. **Modify:** Change settings and run again to see different results
+### 2. Customize the Configuration
+Edit `/home/runner/work/streaming-household-manager/streaming-household-manager/config.py` to:
+- Set your Windows host name and media paths
+- Choose the preferred provider order
+- Add or remove households
+- Control allowed providers per household
+- Replace placeholder library endpoints with your own licensed or self-hosted sources
 
 ## 💻 Usage Examples
 
@@ -68,7 +50,18 @@ print(status)
 
 ### Start a Stream
 ```python
-result = manager.start_stream("household_1", "Mom", "Movie Title")
+result = manager.start_stream("household_1", "Mom", "Licensed Movie Night")
+print(result)
+```
+
+### Prefer a Specific Provider
+```python
+result = manager.start_stream(
+    "household_1",
+    "Dad",
+    "Concert Recording",
+    preferred_provider="webdav_library",
+)
 print(result)
 ```
 
@@ -78,70 +71,28 @@ result = manager.stop_stream("household_1")
 print(result)
 ```
 
-### Get System Summary
-```python
-summary = manager.get_summary()
-print(f"Active streams: {summary['total_active_streams']}")
-```
+## 🔧 Included Providers
 
-## 🔧 Customization
+The default configuration models these provider types:
+- `remux_media_server`
+- `webdav_library`
+- `torbox_cloud`
+- `debrid_vault`
 
-Edit `config.py` to:
-- Add/remove households
-- Change household names
-- Adjust max streams per household
-- Add your actual service URLs and API keys
-- Configure logging
+They are treated as configurable library backends, not direct peer-to-peer playback engines.
 
-## 📝 What's Included
+## 📚 What This Project Teaches
 
-- ✅ Configuration management
-- ✅ Stream control (start/stop)
-- ✅ Status monitoring
-- ✅ Service health checks
-- ✅ Activity logging
-- ✅ Comprehensive documentation
-- ✅ Working demo
+- How to separate configuration from application logic
+- How to manage state for multiple households
+- How to select between multiple backends with a simple priority order
+- How to log and summarize application activity
 
-## 🎓 Learning Programming
+## 🔮 Next Steps
 
-This project teaches:
-- How to organize code (files and functions)
-- How to use dictionaries to store data
-- How to write functions that do specific tasks
-- How to use classes to group related functions
-- How to use if statements for decision making
-- How to use loops to repeat actions
-
-## 🔮 Future Enhancements
-
-You could add:
-- Web interface (Flask, Django)
-- Database integration (SQLite, PostgreSQL)
-- Real API integration (aiostream, Torbox)
-- User authentication
-- Advanced scheduling
-- Analytics and reporting
-- Email notifications
-
-## 📚 Resources
-
-- **Python Guide:** https://www.python.org/about/gettingstarted/
-- **GitHub Guide:** https://guides.github.com/
-- **Programming Basics:** https://www.codecademy.com/
-
-## 🤝 Contributing
-
-This is a learning project. Feel free to:
-- Suggest improvements
-- Report bugs
-- Ask questions
-- Create your own version
-
-## 📄 License
-
-This project is open source and available for learning purposes.
-
----
-
-**Start with GUIDE.md to learn how everything works!** 🚀
+You could extend this project with:
+- A small Flask or FastAPI control panel
+- Persistent storage for sessions
+- Real provider API integrations
+- Windows service packaging
+- Household-specific access policies

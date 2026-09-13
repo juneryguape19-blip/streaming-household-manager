@@ -1,220 +1,113 @@
 # Streaming Household Manager - Beginner's Guide
 
-Welcome! This guide explains how this code works, even if you have no IT background.
+Welcome! This guide explains the updated project as a **Windows-based multi-household media manager**.
 
 ---
 
 ## 📚 What Is This Project?
 
-This is a **management tool** for controlling streaming across multiple households. Think of it like a manager that:
-- Keeps track of who's watching what
-- Makes sure no household exceeds their stream limit
-- Monitors the health of your services
-- Records what happens (logging)
+This project keeps playback organized across households from one Windows machine. It is designed to:
+- Track which household is using which stream slot
+- Pick an allowed provider for each household
+- Prefer a local remux media server before remote libraries
+- Keep a simple session history while the app is running
 
 ---
 
 ## 🏗️ How It's Organized
 
-### File 1: `config.py` (Configuration)
-**What it does:** Stores all the settings and information
+### File 1: `config.py`
+Stores the settings for:
+- Your Windows host
+- Household stream limits
+- Allowed providers per household
+- Provider connection details and priority
 
-Think of it like a **notebook** that contains:
-- List of households (Living Room, Bedroom, Guest Room)
-- How many people live in each household
-- Maximum streams allowed per household
-- Information about your streaming services
+### File 2: `streaming_manager.py`
+This is the control center. It can:
+1. Read the configuration
+2. Choose the best provider for a household
+3. Start and stop playback sessions
+4. Check provider readiness
+5. Summarize the overall system
 
-```python
-HOUSEHOLDS = {
-    "household_1": {
-        "name": "Living Room",
-        "users": ["Mom", "Dad"],
-        "max_streams": 2,           # Can watch 2 things at once
-        "current_streams": 1,       # Currently watching 1 thing
-        "status": "active"
-    }
-}
-```
-
-**Why separate it?** If you need to change information, you don't have to touch the complicated code — just edit this file!
-
----
-
-### File 2: `streaming_manager.py` (The Control Center)
-**What it does:** Contains the logic and rules
-
-This is like the **brain** of your system. It has a class called `StreamingManager` that can:
-
-1. **Check Status** → `get_household_status("household_1")`
-   - Tells you what's happening in a specific household
-   - Shows available slots for new streams
-
-2. **Start a Stream** → `start_stream("household_1", "Mom", "Netflix Show")`
-   - Someone wants to watch something
-   - Checks if there's room (within the limit)
-   - Starts the stream if allowed
-
-3. **Stop a Stream** → `stop_stream("household_1")`
-   - Someone stops watching
-   - Frees up a slot
-
-4. **Check Services** → `check_service_health()`
-   - Makes sure your aiostream, Torbox, etc. are working
-
-5. **Keep Records** → `log_action()`
-   - Records everything that happens (for troubleshooting later)
+### File 3: `main.py`
+A simple demo that shows:
+1. System summary
+2. Household status
+3. Provider health
+4. Starting streams
+5. Handling stream limit errors
+6. Stopping streams
 
 ---
 
-### File 3: `main.py` (The Demo)
-**What it does:** Shows how to USE everything
+## 🔄 How It Works Together
 
-This is like a **tutorial** that demonstrates:
-1. Getting a summary of everything
-2. Checking all households
-3. Starting streams
-4. Handling errors (like when max streams is reached)
-5. Stopping streams
-6. Checking services
-
-**To run it:** Open terminal and type:
-```bash
-python main.py
-```
-
-You'll see the demo in action!
-
----
-
-## 🔄 How It All Works Together
-
-```
-[config.py] ← Stores data
+```text
+[config.py] settings
     ↓
-[streaming_manager.py] ← Uses the data and applies logic
+[streaming_manager.py] household rules + provider selection
     ↓
-[main.py] ← Calls streaming_manager and shows results
+[main.py] demo output
 ```
-
-**Example Flow:**
-1. `config.py` says "Household 1 can have max 2 streams"
-2. User tries to start stream #3 in Household 1
-3. `streaming_manager.py` checks: "2 already running, max is 2... REJECTED"
-4. `main.py` shows: "Error: Max streams reached"
 
 ---
 
-## 💡 Key Programming Concepts Explained
+## 🎯 Example Flow
 
-### 1. **Dictionary** (Like a phonebook)
-```python
-HOUSEHOLDS = {
-    "household_1": { "name": "Living Room", ... },
-    "household_2": { "name": "Bedroom", ... }
-}
-```
-- "household_1" is the **key** (name/label)
-- All the info about it is the **value** (the data)
-
-### 2. **Function** (Like a recipe)
-```python
-def start_stream(self, household_id, user_name, content_title):
-    # Do things here
-    return result
-```
-- Takes in information (ingredients)
-- Does something with it
-- Gives back a result (the meal)
-
-### 3. **Class** (Like a blueprint)
-```python
-class StreamingManager:
-    def __init__(self):
-        # Initialize
-    def start_stream(self):
-        # Start stream
-    def stop_stream(self):
-        # Stop stream
-```
-- Groups related functions together
-- Has data and methods (functions) in one place
-
-### 4. **If Statement** (Decision making)
-```python
-if household["current_streams"] >= household["max_streams"]:
-    return {"error": "Max streams reached"}
-```
-- Checks a condition
-- Does something if it's true
-- Does something else if it's false
-
-### 5. **Loop** (Repeat)
-```python
-for household_id in self.households:
-    # Do something for each household
-```
-- Goes through a list one by one
-- Does the same thing to each item
+1. Household 1 requests playback.
+2. The manager checks whether the household is active.
+3. The manager checks whether the household still has an available slot.
+4. The manager picks the best active provider from the household's allowed list.
+5. The manager stores a session entry and updates the current stream count.
 
 ---
 
-## 🎯 Real-World Example
+## 💡 Key Concepts
 
-**Scenario:** Mom wants to watch Netflix in the Living Room
+### Household Rules
+Each household has:
+- a name
+- users
+- a maximum number of streams
+- a list of allowed providers
+- a list of current sessions
 
-1. **Call function:** `manager.start_stream("household_1", "Mom", "Netflix Show")`
+### Provider Priority
+The Windows host configuration defines the preferred order:
+1. `remux_media_server`
+2. `webdav_library`
+3. `torbox_cloud`
+4. `debrid_vault`
 
-2. **What happens inside:**
-   ```
-   Check: Does household_1 exist? YES
-   Check: Is it active? YES
-   Check: Current streams (1) < Max streams (2)? YES
-   Action: Add 1 to current_streams (now it's 2)
-   Log: "Stream started: Mom in Living Room - Netflix Show"
-   Return: Success message
-   ```
+The manager uses that order unless you request a specific provider.
 
-3. **Result:** Mom can watch! ✅
-
-4. **Next scenario:** Dad also wants to watch
-   1. Call: `manager.start_stream("household_1", "Dad", "Sports")`
-   2. Current streams: 2, Max: 2
-   3. Result: SUCCESS! ✅ (now 2 streams active)
-
-5. **Another scenario:** Sister wants to watch
-   1. Call: `manager.start_stream("household_1", "Sister", "Game")`
-   2. Current streams: 2, Max: 2
-   3. Check: 2 >= 2? YES
-   4. Result: ERROR ❌ "Max streams reached"
+### Session Tracking
+Each started stream creates a session record with:
+- session ID
+- user
+- content title
+- provider used
+- start time
 
 ---
 
-## 🚀 How To Extend This
+## 🚀 What To Customize First
 
-Once you understand these basics, you can:
-
-1. **Add more households** in `config.py`
-2. **Add more functions** in `streaming_manager.py` (like user management, billing, etc.)
-3. **Connect to real services** (call the actual aiostream API, Torbox API, etc.)
-4. **Create a web interface** so you can use it in your browser instead of command line
-5. **Add a database** to permanently save records
+Open `/home/runner/work/streaming-household-manager/streaming-household-manager/config.py` and update:
+- `WINDOWS_HOST`
+- your library paths
+- your endpoint URLs
+- the households you want to manage
+- the allowed providers for each household
 
 ---
 
 ## 📝 Summary
 
-- **config.py** = Data/Settings
-- **streaming_manager.py** = Logic/Rules
-- **main.py** = Demo/Usage
-- **Classes** = Blueprints for organizing code
-- **Functions** = Reusable recipes
-- **Dictionaries** = Data storage (keys and values)
+- `config.py` = settings
+- `streaming_manager.py` = rules and state changes
+- `main.py` = example usage
 
-That's the foundation! Everything in programming builds on these concepts. 🎉
-
----
-
-## ❓ Questions?
-
-Go to the repository issues and ask! The community is here to help.
+Once you are comfortable with this version, the next practical step is adding a simple API or web UI.

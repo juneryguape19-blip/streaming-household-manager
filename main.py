@@ -3,26 +3,27 @@
 
 from streaming_manager import StreamingManager
 
+
 def main():
     """Main function - demonstrates how the streaming manager works"""
-    
-    # Create an instance of the StreamingManager
+
     manager = StreamingManager()
-    
+
     print("=" * 60)
-    print("STREAMING HOUSEHOLD MANAGER - DEMO")
+    print("WINDOWS HOUSEHOLD MEDIA MANAGER - DEMO")
     print("=" * 60)
-    
-    # 1. Show summary of all households
+
     print("\n📊 SYSTEM SUMMARY:")
     print("-" * 60)
     summary = manager.get_summary()
+    print(f"Windows Host: {summary['windows_host']}")
+    print(f"Media Root: {summary['media_root']}")
     print(f"Total Households: {summary['total_households']}")
     print(f"Active Households: {summary['active_households']}")
+    print(f"Active Providers: {summary['active_providers']}")
     print(f"Active Streams: {summary['total_active_streams']}/{summary['total_capacity']}")
     print(f"Available Slots: {summary['available_slots']}")
-    
-    # 2. Show status of all households
+
     print("\n🏠 HOUSEHOLD STATUS:")
     print("-" * 60)
     all_households = manager.get_all_households()
@@ -32,57 +33,60 @@ def main():
         print(f"  Status: {status['status']}")
         print(f"  Streams: {status['current_streams']}/{status['max_streams']} in use")
         print(f"  Available: {status['streams_available']} slot(s)")
-    
-    # 3. Start some streams
+        print(f"  Providers: {', '.join(status['recommended_provider_order'])}")
+
+    print("\n🗂️  PROVIDER HEALTH:")
+    print("-" * 60)
+    health = manager.check_service_health()
+    for provider_id, service_info in health.items():
+        print(
+            f"{provider_id}: {service_info['status'].upper()} "
+            f"({service_info['service_type']}, {service_info['access_method']})"
+        )
+
     print("\n▶️  STARTING STREAMS:")
     print("-" * 60)
-    
-    result = manager.start_stream("household_1", "Mom", "Netflix Show")
-    print(f"Result: {result['message']}")
-    
-    result = manager.start_stream("household_1", "Dad", "Movie Time")
-    print(f"Result: {result['message']}")
-    
-    # This should fail because max streams reached
-    result = manager.start_stream("household_1", "Someone", "Another Show")
+    result = manager.start_stream("household_1", "Mom", "Licensed Movie Night")
+    print(f"Result: {result['message']} [{result['session_id']}]")
+
+    result = manager.start_stream(
+        "household_1",
+        "Dad",
+        "Concert Recording",
+        preferred_provider="webdav_library",
+    )
+    print(f"Result: {result['message']} [{result['session_id']}]")
+
+    result = manager.start_stream("household_1", "Someone", "Another Title")
     if "error" in result:
         print(f"Result: ❌ {result['error']}")
-    
-    result = manager.start_stream("household_2", "Son", "Gaming Stream")
-    print(f"Result: {result['message']}")
-    
-    # 4. Show updated status
+
+    result = manager.start_stream("household_2", "Son", "Family Archive Episode")
+    print(f"Result: {result['message']} [{result['session_id']}]")
+
     print("\n📈 UPDATED HOUSEHOLD STATUS:")
     print("-" * 60)
     all_households = manager.get_all_households()
     for household_id, status in all_households.items():
-        print(f"\n{status['name']}:")
+        print(f"\n{status['name']} ({household_id}):")
         print(f"  Streams: {status['current_streams']}/{status['max_streams']} in use")
-        print(f"  Available: {status['streams_available']} slot(s)")
-    
-    # 5. Check service health
-    print("\n🔧 SERVICE HEALTH:")
-    print("-" * 60)
-    health = manager.check_service_health()
-    for service_name, service_info in health.items():
-        print(f"{service_name}: {service_info['status'].upper()}")
-    
-    # 6. Stop a stream
+        print(f"  Sessions: {len(status['current_sessions'])}")
+
     print("\n⏹️  STOPPING STREAM:")
     print("-" * 60)
     result = manager.stop_stream("household_1")
     print(f"Result: {result['message']}")
-    
-    # 7. Final summary
+
     print("\n📊 FINAL SUMMARY:")
     print("-" * 60)
     summary = manager.get_summary()
     print(f"Active Streams: {summary['total_active_streams']}/{summary['total_capacity']}")
     print(f"Available Slots: {summary['available_slots']}")
-    
+
     print("\n" + "=" * 60)
     print("Demo completed!")
     print("=" * 60)
+
 
 if __name__ == "__main__":
     main()
